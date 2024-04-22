@@ -1,53 +1,94 @@
-import csv, random
+import csv, random, os
 
 
 class CsvFile:
 
-    def __init__(self, filename):
-        self.name = filename
-        with open(self.name) as csv_file:
+    def __init__(self, path, filename):
+        self.path = path
+        self.filename = filename
+        with open(self.path + '/' + self.filename, 'r') as csv_file:
             reader = csv.reader(csv_file, delimiter=',')
             self.data = [row for row in reader]
-        self.rows = len(self.data) - 1
-        self.cols = len(self.data[0])
+        self.head = self.data[0]
+        self.data = self.data[1:]
+        self.rows = len(self.data)
+        self.cols = len(self.head)
         self.maxLen = [0] * self.cols
 
     def show(self, output='top', lines=5, separator=','):
 
-        def prettyLineOutput(arr):
-            for s in out_data:
+        def prettyLineOutput():
+            for s in [self.head] + out_data:
                 self.maxLen = list(map(lambda x: max(self.maxLen[x[0]], len(x[1])), enumerate(s)))
-            print(" ".join([str(arr[x]) + ' ' * (self.maxLen[x] - len(str(arr[x]))) + separator for x in range(self.cols)]))
+
+            print('┌' + "".join(['─' * (x + 1) + '┬' for x in self.maxLen])[1:-1] + '┐')
+            print('│' + " ".join([str(self.head[x]) + ' ' * (self.maxLen[x] - len(str(self.head[x])))
+                                  + separator for x in range(self.cols)]))
+            print('├' + "".join(['─' * (x + 1) + '┼' for x in self.maxLen])[1:-1] + '┤')
+
+            for line in out_data:
+                print('│' + " ".join([str(line[x]) + ' ' * (self.maxLen[x] - len(str(line[x]))) + separator
+                                     for x in range(self.cols)]))
+
+            print('└' + "".join(['─' * (x + 1) + '┴' for x in self.maxLen])[1:-1] + '┘')
 
         match output:
             case 'top':
-                out_data = self.data[:lines + 1]
-                [prettyLineOutput(row) for row in out_data]
+                out_data = self.data[:lines]
+                prettyLineOutput()
 
             case 'bottom':
-                out_data = [self.data[0]] + self.data[-lines:]
-                [prettyLineOutput(row) for row in out_data]
+                out_data = self.data[-lines:]
+                prettyLineOutput()
 
             case 'random':
-                r_nums = ['PassengerId']
-                r_nums.extend(random.sample([row[0] for row in self.data], 5))
+                r_nums = random.sample([row[0] for row in self.data], lines)
                 out_data = [row for row in self.data if row[0] in r_nums]
-                [prettyLineOutput(line) for line in out_data]
+                prettyLineOutput()
 
     def info(self):
-        print(f'Table Dimension:    {self.rows}x{self.cols}\n')
+        print('┌' + '─' * 32 + '┐')
+        print(f'│Table Dimension:{"." * (15 - len(str(self.rows) + str(self.cols)))}{self.rows }x{self.cols}│')
         non_null = [0] * self.cols
-        for row in self.data[1:]:
+        for row in self.data:
             non_null = [non_null[i] + int(item != '') for i, item in enumerate(row)]
         for x in range(self.cols):
-            print(f'{self.data[0][x]}:\t{non_null[x]}')
-        print('--------------------------------')
+            print(f'│{self.head[x]}: {"." * (30 - len(self.head[x]) - len(str(non_null[x])))}{non_null[x]}│')
+        print('└' + '─' * 32 + '┘')
 
     def delNaN(self):
-        for line in self.data:
-            if not all(list(map(lambda x: x != '', line))):
-                self.data.remove(line)
-                self.rows -= 1
+        self.data = list(filter(lambda x: all(list(map(lambda y: y != '', x))), self.data))
+        self.rows = len(self.data)
+        print('┌─────────────────────────────────────────────────────────┐')
+        print('│ -> null values having rows are successfully deleted! <- │')
+        print('└─────────────────────────────────────────────────────────┘')
 
     def makeDS(self):
-        pass
+        sep = int(self.rows * 0.7)
+        nums = [row[0] for row in self.data]
+        random.shuffle(nums)
+        learning_items, testing_items = nums[:sep], nums[sep:]
+        learning_data = [row for row in self.data if row[0] in learning_items]
+        testing_data = [row for row in self.data if row[0] in testing_items]
+
+        learning_path = self.path + '/workdata' + '/learning'
+        testing_path = self.path + '/workdata' + '/testing'
+        if not os.path.exists(self.path + '/workdata'): os.mkdir(self.path + '/workdata')
+        if not os.path.exists(learning_path): os.mkdir(learning_path)
+        if not os.path.exists(testing_path): os.mkdir(testing_path)
+
+        with open(learning_path + '/train.csv', 'w', newline='') as file1:
+            writer = csv.writer(file1)
+            writer.writerow(self.head)
+            [writer.writerow(row) for row in learning_data]
+
+        with open(testing_path + '/test.csv', 'w', newline='') as file2:
+            writer = csv.writer(file2)
+            writer.writerow(self.head)
+            [writer.writerow(row) for row in testing_data]
+
+        if os.path.exists(learning_path + '/train.csv') and os.path.exists(testing_path + '/test.csv'):
+            print('┌───────────────────────────────────────────┐')
+            print('│ -> csv-files are successfully created! <- │')
+            print('└───────────────────────────────────────────┘')
+            return learning_path, 'train.csv', testing_path, 'test.csv'
