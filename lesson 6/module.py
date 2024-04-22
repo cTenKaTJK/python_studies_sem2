@@ -42,8 +42,7 @@ class CsvFile:
                 prettyLineOutput()
 
             case 'random':
-                r_nums = random.sample([row[0] for row in self.data], lines)
-                out_data = [row for row in self.data if row[0] in r_nums]
+                out_data = [row for row in self.data if row[0] in random.sample([row[0] for row in self.data], lines)]
                 prettyLineOutput()
 
     def info(self):
