@@ -9,7 +9,7 @@ if __name__ == '__main__':
     table.info()
     table.delNaN()
     table.info()
-    table.show(output='random', separator='│', lines=3)
+    table.show(output='random', separator='│', lines=10)
 
     path1, name1, path2, name2 = table.makeDS()
 
@@ -20,3 +20,6 @@ if __name__ == '__main__':
     test = CsvFile(path=path2, filename=name2)
     test.info()
     test.show(separator='│')
+
+    input('...press enter to escape...')
+    sys.exit(0)
