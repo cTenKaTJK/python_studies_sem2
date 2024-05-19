@@ -42,17 +42,33 @@ class CsvFile:
                 prettyLineOutput()
 
             case 'random':
-                out_data = [row for row in self.data if row[0] in random.sample([row[0] for row in self.data], lines)]
+                r_nums =random.sample([row[0] for row in self.data], lines)
+                out_data = [row for row in self.data if row[0] in r_nums]
                 prettyLineOutput()
 
     def info(self):
-        print('┌' + '─' * 32 + '┐')
-        print(f'│Table Dimension:{"." * (15 - len(str(self.rows) + str(self.cols)))}{self.rows }x{self.cols}│')
+        def get_type(line, types):
+            for i, item in enumerate(line):
+                if len(item) == 1 and ord(item) in (48, 49):
+                    continue
+                for sym in item:
+                    if 47 < ord(sym) < 58:
+                        types[i] = 'int'
+                    elif ord(sym) < 48 or ord(sym) > 57:
+                        types[i] = 'str'
+                        break
+            return types
+
         non_null = [0] * self.cols
+        types = ['bool'] * self.cols
         for row in self.data:
             non_null = [non_null[i] + int(item != '') for i, item in enumerate(row)]
+            types = get_type(row, types)
+
+        print('┌' + '─' * 32 + '┐')
+        print(f'│Table Dimension:{"." * (15 - len(str(self.rows) + str(self.cols)))}{self.rows}x{self.cols}│')
         for x in range(self.cols):
-            print(f'│{self.head[x]}: {"." * (30 - len(self.head[x]) - len(str(non_null[x])))}{non_null[x]}│')
+            print(f'│{self.head[x]}: {"." * (19 - len(self.head[x]) - len(str(non_null[x])))}{non_null[x]} type: {types[x] + (" " * (4 - len(types[x])))}│')
         print('└' + '─' * 32 + '┘')
 
     def delNaN(self):
