@@ -42,19 +42,23 @@ class CsvFile:
                 prettyLineOutput()
 
             case 'random':
-                r_nums =random.sample([row[0] for row in self.data], lines)
+                r_nums = random.sample([row[0] for row in self.data], lines)
                 out_data = [row for row in self.data if row[0] in r_nums]
                 prettyLineOutput()
 
     def info(self):
         def get_type(line, types):
             for i, item in enumerate(line):
+                item = item.strip().rstrip()
                 if len(item) == 1 and ord(item) in (48, 49):
                     continue
                 for sym in item:
-                    if 47 < ord(sym) < 58:
+                    if types[i] == 'bool' and 47 < ord(sym) < 58:
                         types[i] = 'int'
-                    elif ord(sym) < 48 or ord(sym) > 57:
+                    elif types[i] == 'int' and sym == '.':
+                        print(item)
+                        types[i] = 'float'
+                    elif (ord(sym) < 48 or ord(sym) > 57) and sym != '.':
                         types[i] = 'str'
                         break
             return types
@@ -68,7 +72,7 @@ class CsvFile:
         print('┌' + '─' * 32 + '┐')
         print(f'│Table Dimension:{"." * (15 - len(str(self.rows) + str(self.cols)))}{self.rows}x{self.cols}│')
         for x in range(self.cols):
-            print(f'│{self.head[x]}: {"." * (19 - len(self.head[x]) - len(str(non_null[x])))}{non_null[x]} type: {types[x] + (" " * (4 - len(types[x])))}│')
+            print(f'│{self.head[x]}: {"." * (18 - len(self.head[x]) - len(str(non_null[x])))}{non_null[x]} type: {types[x] + (" " * (5 - len(types[x])))}│')
         print('└' + '─' * 32 + '┘')
 
     def delNaN(self):
