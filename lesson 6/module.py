@@ -56,7 +56,6 @@ class CsvFile:
                     if types[i] == 'bool' and 47 < ord(sym) < 58:
                         types[i] = 'int'
                     elif types[i] == 'int' and sym == '.':
-                        print(item)
                         types[i] = 'float'
                     elif (ord(sym) < 48 or ord(sym) > 57) and sym != '.':
                         types[i] = 'str'
