@@ -1,4 +1,7 @@
 import numpy as np
+from scipy.linalg import cholesky, solve_triangular
+from scipy.stats import multivariate_normal as mn
+import time
 
 
 def task1():
@@ -42,7 +45,7 @@ def task3():
     print('min:\t', np.min(matrix))
     print('max:\t', np.max(matrix))
     print('mean value:\t', np.mean(matrix))
-    print('standart deviation:\t', np.std(matrix))
+    print('standard deviation:\t', np.std(matrix))
     print('first 5 rows:\n', matrix[:5, :], '\n')
 
 
@@ -56,18 +59,31 @@ def task4(vector):
     print('max value after 0:\t', np.max(vector[zeroes + 1]), '\n')
 
 
-'''
-точка X
-размер R x C
-мат.ожидание M
-вектор длины D
-матрица ковариаций C
-размер C x C
-'''
+def task5(matrix, cov_matrix, m):
+    print('┌─────────┐')
+    print('│ TASK №5 │')
+    print('└─────────┘')
+    n, d = matrix.shape
+    diff = matrix - m
+
+    start1_time = time.time()
+
+    ch = cholesky(cov_matrix, lower=True)
+    inv = solve_triangular(ch, np.eye(d), lower=True)
+    invars = inv.T @ inv
+    log_calculated = 0.5 * (np.sum(diff @ invars * diff, axis=1) + (-2 * np.sum(np.log(np.diag(ch)))) + d * np.log(2 * np.pi))
+
+    fin1_time = time.time()
 
 
-def task5(matrix, m, cov_matrix):
-    pass
+    print(f'log calculation time:\t{fin1_time - start1_time}')
+
+    scipy_calculated = mn(m, cov_matrix).logpdf(matrix)
+
+    fin2_time = time.time()
+
+    print(f'scipy calculation time:\t{fin2_time - fin1_time}')
+    print(f'max accuracy difference:\t{np.max(np.abs(log_calculated - scipy_calculated))}')
 
 
 def task6():
@@ -104,10 +120,8 @@ if __name__ == '__main__':
     task2('2 2 2 3 3 3 5 4 4')
     task3()
     task4(np.array([6, 2, 0, 3, 0, 0, 5, 7, 0]))
-    # task5()
+    task5(np.random.randn(1000, 2), np.array([[1, 0.5], [0.5, 2]]), np.array([0, 0]))
     task6()
     task7()
     task8()
     input('\n...press enter to escape...')
-
-
